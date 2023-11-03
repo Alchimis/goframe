@@ -3,7 +3,7 @@ console.log("saaas")
 
 const ip = "192.168.108.194"
 const adress = "http://"+ip;//127.0.0.1";
-const wsAdress = "ws://"+ip;//127.0.0.1";
+const wsAdress = "ws://"+ip//127.0.0.1";
 const port = ":7070";
 const gameRoute = "/game";
 const connectRoute = "/connect"
@@ -48,7 +48,7 @@ async function third(){
 const messageFieldId= "messagefield";
 
 
-const dd = wsAdress+port+connectRoute;
+
 const socket = new WebSocket(wsAdress+port+connectRoute);
 console.log("sock",socket);
 // Обработчик события открытия соединения

@@ -1,10 +1,9 @@
 package main
 
 import (
-	"build"
+	"server"
 )
 
 func main() {
-	build.T()
-	//server.ServerMain()
+	server.ServerMain()
 }
