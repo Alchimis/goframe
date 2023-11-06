@@ -20,8 +20,6 @@ const (
 	READ_BUFFER_SIZE  = 1024
 	WRITE_BUFFER_SIZE = 1024
 )
- 
-
 
 var users = make(map[uuid.UUID]*UserConnection)
 
@@ -46,7 +44,6 @@ func createChannel(name string) (*Channel, error) {
 	}
 	return channel, nil
 }
-
 
 func createAndRegisterChannel(name string, creatorId uuid.UUID) (uuid.UUID, error) {
 	channel, err := createChannel(name)
@@ -92,21 +89,27 @@ func MakeHeader() (header http.Header) {
 	return
 }
 
-type CreateChanelRequest struct{
-	CreatorId UUIDjson `json:"creator_id"`
-	ChannelName string `json:"channel_name"`
+type CreateChanelRequest struct {
+	CreatorId   UUIDjson `json:"creator_id"`
+	ChannelName string   `json:"channel_name"`
 }
 
 // POST /channel
-func CreateChanel(responseWriter http.ResponseWriter, request *http.Request){
+func CreateChanel(responseWriter http.ResponseWriter, request *http.Request) {
 	responseWriter.Header().Set("Access-Control-Allow-Origin", "*")
 	switch request.Method {
 	case http.MethodPost:
+		var requestBody *CreateChanelRequest
+		err := json.NewDecoder(request.Body).Decode(requestBody)
+		if err != nil {
+			log.Println("Error with create chanel decoding: ", err)
+			return
+		}
+		createAndRegisterChannel(requestBody.ChannelName, requestBody.CreatorId.Id)
 
-		json.NewDecoder(request.Body).Decode()
 	default:
-		responseWriter.Write([]byte("method " + request.Method + " not allowed"))		
-	} 
+		responseWriter.Write([]byte("method " + request.Method + " not allowed"))
+	}
 }
 
 func HandleWebsocket(responseWriter http.ResponseWriter, request *http.Request) {

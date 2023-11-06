@@ -8,6 +8,7 @@ import (
 	"github.com/gorilla/websocket"
 )
 
+// в теории эту залупу можно будет сериализовать и что то добавить
 type UserConnection struct {
 	conn        *websocket.Conn
 	connectedAt time.Time
