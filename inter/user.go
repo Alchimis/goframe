@@ -11,9 +11,9 @@ type UuidJson struct {
 }
 
 type User struct {
-	Nickname        string    `json:"nickname"`
-	Password        string    `json:"password"`
-	Id              string    `json:"id"`
-	JoinAt          time.Time `json:"join_at,string,omitempty"`
-	LiveConnections []string  `json:"live_connections,omitempty"`
+	Nickname        string    `json:"nickname" clover:"nickname"`
+	Password        string    `json:"password" clover:"password"`
+	Id              string    `json:"id" clover:"id"`
+	JoinAt          time.Time `json:"join_at,string,omitempty" clover:"join_at,string,omitempty"`
+	LiveConnections []string  `json:"live_connections,omitempty" clover:"live_connections,omitempty"`
 }

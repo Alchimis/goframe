@@ -7,13 +7,15 @@ import (
 	"reflect"
 	"time"
 
+	"server"
+
 	"github.com/google/uuid"
 	"github.com/ostafen/clover/v2/document"
 	//"server"
 )
 
 func buh() {
-	database := dbs.Init([]string{"users"})
+	database := dbs.Init( /*[]string{"users", ""}*/ dbs.GetColections())
 	_, err := database.Run()
 	if err != nil {
 		log.Println("error with db running: ", err)
@@ -148,6 +150,7 @@ func buh() {
 }
 
 func main() {
+	server.NewServerMain()
 	/*
 		запросы к бд.
 			получение всех каналов

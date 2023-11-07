@@ -33,11 +33,11 @@ type ChanelQuery interface {
 }
 
 func GetChanelById(cq interface{}, waw string) (*inter.Channel, error) {
-	chq, ok := cq.(ChanelQuery)
+	chq, ok := cq.(*ChanelQuery)
 	if !ok {
 		return nil, errors.New("Bd isn't interface of ChanelQuery")
 	}
-	return chq.GetChanelById(waw)
+	return (*chq).GetChanelById(waw)
 }
 
 type MessageQuery interface {
@@ -45,11 +45,11 @@ type MessageQuery interface {
 }
 
 func InsertMessage(mq interface{}, message *inter.Message) (string, error) {
-	imq, ok := mq.(MessageQuery)
+	imq, ok := mq.(*MessageQuery)
 	if !ok {
 		return "", errors.New("Bd isn't interface of MessageQuery")
 	}
-	return imq.InsertMessage(message)
+	return (*imq).InsertMessage(message)
 }
 
 func (server *Server) HandleUserTextMessage(conn *UserConnection, message *[]byte) {
@@ -57,42 +57,96 @@ func (server *Server) HandleUserTextMessage(conn *UserConnection, message *[]byt
 		decoder := json.NewDecoder(bytes.NewReader(*message))
 		var mss *SendMessagePing
 		err := decoder.Decode(mss)
-		if err == nil {
-			chanel, err := GetChanelById(server.Db, mss.ChannelId) //server.database.GetChanelById(mss.ChannelId)
-			if err != nil {
-				return
-			}
-
-			mmss := inter.CreateMessage(chanel.Id, conn.userId.String(), mss.Message)
-			_, err = InsertMessage(server.Db, &mmss)
-			if err != nil {
-				return
-			}
-			chanel.NotifyAllUsers(func(id string) {
-				//server.ActiveConnections[id]
-
-				NotifyConcreteUser(server.ActiveConnections[id], mss.Message)
-			})
-
+		if err != nil {
+			log.Println("Errorr with decoding")
+			return
 		}
+
+		chanel, err := GetChanelById(server.Db, mss.ChannelId) //server.database.GetChanelById(mss.ChannelId)
+		if err != nil {
+			log.Println("Chanel not finded, err: ", err)
+			return
+		}
+
+		mmss := inter.CreateMessage(chanel.Id, conn.userId.String(), mss.Message)
+		_, err = InsertMessage(server.Db, &mmss)
+		if err != nil {
+			log.Println("Can't insert message: ", err)
+			return
+		}
+		chanel.NotifyAllUsers(func(id string) {
+			NotifyConcreteUser(server.ActiveConnections[id], mss.Message)
+		})
+
 	}
 }
 
+const PLEASE_DONT_SEND_BINARY_STRING = "Please don't send binar"
+
+var PLEASE_DONT_SEND_BINARY_SLICE = []byte(PLEASE_DONT_SEND_BINARY_STRING)
+
+func (server *Server) HandleBinaryMessage(conn *UserConnection, message *[]byte) {
+	conn.conn.WriteMessage(websocket.BinaryMessage, PLEASE_DONT_SEND_BINARY_SLICE)
+}
+
+func (server *Server) HandleRegistration(responseWriter http.ResponseWriter, request *http.Request) {
+	//
+
+	reader, err := request.GetBody()
+	if err != nil {
+		log.Println("Error with getting request body: ", err)
+		// TODO: отправлять пользоателю ошибку(внутренняя ошибка сервера)
+		return
+	}
+	buff := make([]byte, 1024)
+	n, err := reader.Read(buff)
+	if err != nil {
+		log.Println("Error with getting request body: ", err)
+		// TODO: отправлять пользоателю ошибку(внутренняя ошибка сервера)
+		return
+	}
+	// TODO: поправить эту сепердибильную тему
+	slc := buff[:n]
+	var registrationRequset *RegistrationRequest
+	err = json.Unmarshal(slc, registrationRequset)
+	if err != nil {
+		log.Println("Error with registration request unmarshal: ", err)
+		// TODO: вот тут я хз. надо посмотреть какие там могут быть ошибки, потому что варианта 2: либу у меня на сервере что то произошло, либо запрос некоректный. а при некоректном запросе надо отправлять пользователю с чем именно проблема
+		return
+	}
+	// TODO: добавить добавление нового пользователя в бд
+	// TODO: сделать приколы с токенами
+	// TODO: отправить токен в качестве ответа
+
+}
+
+func (server *Server) HandleLogin(responseWriter http.ResponseWriter, request *http.Request) {
+	//
+}
+
 // возможно стоит уведомить юзера когда он отключён
+// БАЗА: АУТЕНТИФИКАЦИЯ ПРОХОДИТ КАК ОБЫЧНО ЧЕРЕЗ HTTPS. В ОТВЕТЕ ОТ СЕРВЕРА ДОЛЖЕН БЫТЬ ПРОПУСК. ЭТОТ ПРОПУСК СТОИТ ИСПОЛЬЗОВАТЬ КАК ЧАСТЬ INITIAL HANDSHAKE
+// И ЕЩЁ: ИСПОЛЬЗОВАТЬ WWS, ПрОВЕРЯТЬ ДАННЫЕ КАК НА ВХОДЕ ТАК И НА ВЫХОДЕ
+// https://devcenter.heroku.com/articles/websocket-security
 func (server *Server) ConnectUser(responseWriter http.ResponseWriter, request *http.Request) {
 	//responseWriter.Header().Set("Access-Control-Allow-Origin", "*")
 	// АПГРЕЙДЕР ВЫНЕСТИ КУДА ТО
+
 	conn, err := server.Upgrader.Upgrade(responseWriter, request, MakeHeader())
 	if err != nil {
 		log.Println("Problem establishing connection: ", err)
 		return
 	}
+
+	// TODO: добавить проверку токена регистрации
+	// TODO: достать токен из бд
 	var userConn *UserConnection
-	userConn, err = ConstructUserConnection(conn)
+	userConn, err = ConstructUserConnectionWithUserId(conn) //ConstructUserConnection(conn)
 	if err != nil {
 		HandleConstructError(err)
 		return
 	}
+
 	server.ActiveConnections[userConn.id.String()] = userConn
 	defer func() {
 		conn.Close()
@@ -113,11 +167,10 @@ func (server *Server) ConnectUser(responseWriter http.ResponseWriter, request *h
 		switch messageType {
 		//case websocket.PingMessage:
 		//case websocket.PongMessage:
+		case websocket.BinaryMessage:
+			server.HandleBinaryMessage(userConn, &buffer)
 		case websocket.TextMessage:
-			//case websocket.BinaryMessage:
-			//conn.WriteMessage(websocket.TextMessage, buffer)
-
-			handleMessage([]byte(userConn.id.String() + " :" + string(buffer)))
+			server.HandleUserTextMessage(userConn, &buffer)
 		case websocket.CloseMessage:
 			log.Println("Conection closed")
 			handleMessage([]byte(userConn.id.String() + " are disconected from chat"))

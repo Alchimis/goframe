@@ -28,6 +28,19 @@ func ConstructUserConnection(conn *websocket.Conn) (*UserConnection, error) {
 	}, nil
 }
 
+func ConstructUserConnectionWithUserId(conn *websocket.Conn, userId uuid.UUID) (*UserConnection, error) {
+	id, err := uuid.NewUUID()
+	if err != nil {
+		return nil, err
+	}
+	return &UserConnection{
+		conn:        conn,
+		connectedAt: time.Now(),
+		id:          id,
+		userId:      userId,
+	}, nil
+}
+
 func HandleConstructError(err error) {
 	log.Println("error with Construct UserConnection", err)
 }

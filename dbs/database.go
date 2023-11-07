@@ -15,6 +15,20 @@ import (
 	q "github.com/ostafen/clover/v2/query"
 )
 
+const (
+	CHANNELS_COLECTION = "channels"
+	USERS_COLETION     = "users"
+	MESSAGES_COLECTION = "messages"
+)
+
+func GetColections() []string {
+	return []string{
+		CHANNELS_COLECTION,
+		USERS_COLETION,
+		MESSAGES_COLECTION,
+	}
+}
+
 type CloverDB struct {
 	Destination string
 	Db          *c.DB
@@ -276,6 +290,11 @@ func (db *CloverDB) DeleteAllWhere(from string, conditions map[string]interface{
 	return nil, err
 }
 
+func (db *CloverDB) InsertChanel(to string, chanel *internal.Channel) (string, error) {
+	doc := document.NewDocumentOf(chanel)
+	return db.Db.InsertOne(to, doc)
+}
+
 // я могу нанизывать условия. если я расширю интерфейс до двух функций я смогу и условия дополнять. к сожалению не особо гибко получаеться
 // можно сделать настройки и передавать всякие скрипты к какую то отдельную структуру.
 //
@@ -336,4 +355,17 @@ func (db *CloverDB) GetChanelById(id string) (*internal.Channel, error) {
 		Users:     b.Users,
 		CreatedAt: b.CreatedAt,
 	}, nil
+}
+
+func (db *CloverDB) InsertMessageRaw(ms *internal.Message) (string, error) {
+
+	doc := document.NewDocumentOf(ms)
+	if doc == nil {
+		return "", errors.New("Someshit with message parsing to doc")
+	}
+	return db.Db.InsertOne(MESSAGES_COLECTION, doc)
+}
+
+func (db *CloverDB) InsertMessage(ms *internal.Message) (string, error) {
+	return db.InsertMessageRaw(ms)
 }

@@ -1,7 +1,9 @@
 package server
 
 import (
+	"dbs"
 	"encoding/json"
+	"inter"
 	"log"
 	"net/http"
 	"time"
@@ -57,14 +59,14 @@ func createAndRegisterChannel(name string, creatorId uuid.UUID) (uuid.UUID, erro
 	return id, nil
 }
 
-func allowAll(req *http.Request) bool {
+func AllowAll(req *http.Request) bool {
 	return true
 }
 
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:  READ_BUFFER_SIZE,
 	WriteBufferSize: WRITE_BUFFER_SIZE,
-	CheckOrigin:     allowAll,
+	CheckOrigin:     AllowAll,
 }
 
 func handleMessage(message []byte) {
@@ -164,6 +166,31 @@ func HandleWebsocket(responseWriter http.ResponseWriter, request *http.Request) 
 func ServerMain() {
 	http.HandleFunc("/game", game.HandleResponseToGame)
 	http.HandleFunc("/connect", HandleWebsocket)
+	log.Println("Server started")
+
+	err := http.ListenAndServe(ADDRESS, nil)
+	if err != nil {
+		log.Println("Http err", err)
+	}
+}
+
+func NewServerMain() {
+	//http.HandleFunc("/game", game.HandleResponseToGame)
+	database := dbs.Init(dbs.GetColections())
+
+	database.Run()
+	database.InsertChanel(dbs.CHANNELS_COLECTION, &inter.Channel{})
+	server := &Server{
+		Db: database,
+		Upgrader: websocket.Upgrader{
+			ReadBufferSize:  READ_BUFFER_SIZE,
+			WriteBufferSize: WRITE_BUFFER_SIZE,
+			CheckOrigin:     AllowAll,
+		},
+		ActiveConnections: make(map[string]*UserConnection),
+	}
+
+	http.HandleFunc("/connect", server.ConnectUser)
 	log.Println("Server started")
 
 	err := http.ListenAndServe(ADDRESS, nil)
