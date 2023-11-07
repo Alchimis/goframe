@@ -13,6 +13,7 @@ type UserConnection struct {
 	conn        *websocket.Conn
 	connectedAt time.Time
 	id          uuid.UUID
+	userId      uuid.UUID
 }
 
 func ConstructUserConnection(conn *websocket.Conn) (*UserConnection, error) {

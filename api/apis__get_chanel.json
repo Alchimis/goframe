@@ -1,0 +1,16 @@
+{
+    "id": "id",
+    "created_at": "time",
+    "name": "name",
+    "users": [
+        {
+            "id": "id"
+        },
+        {
+            "id": "id"
+        },
+        {
+            "id": "id"
+        }
+    ]
+}

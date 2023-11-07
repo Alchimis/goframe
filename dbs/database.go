@@ -204,30 +204,6 @@ func InterfaceToString(mb interface{}) (string, error) {
 	return target, nil
 }
 
-func RecordToChanel(record map[string]interface{}) (*internal.Channel, error) {
-	var (
-		ok     bool
-		mb     interface{}
-		err    error
-		chanel *internal.Channel = &internal.Channel{}
-	)
-	mb, ok = record["id"]
-	if ok {
-		chanel.Id, err = InterfaceToUUID(mb)
-		if err != nil {
-			return nil, err
-		}
-	}
-	mb, ok = record["name"]
-	if ok {
-		chanel.Name, err = InterfaceToString(mb)
-		if err != nil {
-			return nil, err
-		}
-	}
-	return chanel, nil
-}
-
 func ChanelToDoc(chn *internal.Channel) (*document.Document, error) {
 	doc := document.NewDocumentOf(chn)
 	err := doc.Unmarshal(chn)
@@ -322,4 +298,42 @@ func (db *CloverDB) DeleteAllInterfaceWhere(from string, focus interface{}) (int
 		return conditions(doc)
 	}))
 	return nil, err
+}
+
+func (db *CloverDB) GetChanelByIdRaw(id string) (*d.Document, error) {
+	return db.Db.FindFirst(q.NewQuery("channels").MatchFunc(
+		func(doc *d.Document) bool {
+			if !(doc.Has("id") && doc.Has("cretaed_at") && doc.Has("users")) {
+				return false
+			}
+			idd := doc.Get("id")
+			iddd, ok := idd.(string)
+			if !ok {
+				return false
+			}
+			return iddd == id
+		},
+	))
+}
+func (db *CloverDB) GetChanelById(id string) (*internal.Channel, error) {
+	doc, err := db.GetChanelByIdRaw(id)
+	if err != nil {
+		return nil, err
+	}
+	b := &struct {
+		Id        string    `clover:"id,string"`
+		Name      string    `clover:"name"`
+		CreatedAt time.Time `clover:"cretaed_at,string,omitempty"`
+		Users     []string  `clover:"users"`
+	}{}
+	err = doc.Unmarshal(b)
+	if err != nil {
+		return nil, err
+	}
+	return &internal.Channel{
+		Id:        b.Id,
+		Name:      b.Name,
+		Users:     b.Users,
+		CreatedAt: b.CreatedAt,
+	}, nil
 }

@@ -1,3 +1,3 @@
-package internal
+package inter
 
 type Condition map[string]string

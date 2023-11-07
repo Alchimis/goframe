@@ -49,3 +49,31 @@ func mainFraud() {
 	}
 
 }
+
+/*
+
+func RecordToChanel(record map[string]interface{}) (*internal.Channel, error) {
+	var (
+		ok     bool
+		mb     interface{}
+		err    error
+		chanel *internal.Channel = &internal.Channel{}
+	)
+	mb, ok = record["id"]
+	if ok {
+		chanel.Id, err = InterfaceToUUID(mb)
+		if err != nil {
+			return nil, err
+		}
+	}
+	mb, ok = record["name"]
+	if ok {
+		chanel.Name, err = InterfaceToString(mb)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return chanel, nil
+}
+
+*/
