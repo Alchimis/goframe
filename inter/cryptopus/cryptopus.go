@@ -7,6 +7,8 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
+	"io"
+	"log"
 	"os"
 	"path/filepath"
 )
@@ -15,14 +17,32 @@ func GenerateRSAPrivateKey() (*rsa.PrivateKey, error) {
 	return rsa.GenerateKey(rand.Reader, 2048)
 }
 
-func ReadKeyFromFile(file string) (*rsa.PrivateKey, error) {
-	data, err := os.ReadFile(file)
+func WriteKeyToFile(key *rsa.PrivateKey, file *os.File) error {
+
+	privateKeyPEM := &pem.Block{
+		Type:  "RSA PRIVATE KEY",
+		Bytes: x509.MarshalPKCS1PrivateKey(key),
+	}
+
+	err := pem.Encode(file, privateKeyPEM)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func ReadKeyFromFile(file *os.File) (*rsa.PrivateKey, error) {
+	data, err := io.ReadAll(file)
 	if err != nil {
 		return nil, err
 	}
 
-	block, _ := pem.Decode(data)
+	block, rest := pem.Decode(data)
 	if block == nil {
+		log.Println("block ", block)
+		log.Println("rest ", rest)
+		log.Println("data ", data)
 		return nil, errors.New("Can't decode key of raw data")
 	}
 	key, err := x509.ParsePKCS1PrivateKey(block.Bytes)
