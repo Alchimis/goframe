@@ -30,7 +30,10 @@ func TestKeyGen(t *testing.T) {
 	if err != nil {
 		t.Error("Error with file open ", err)
 	}
-	defer newFile.Close()
+	defer func() {
+		newFile.Close()
+		os.Remove(fileName)
+	}()
 
 	keyFromFile, err := cryptopus.ReadKeyFromFile(newFile)
 	if err != nil {
@@ -50,4 +53,5 @@ func TestKeyGen(t *testing.T) {
 		t.Error("Fail! k1 and k2 not equal")
 	}
 	t.Log("Passed")
+
 }

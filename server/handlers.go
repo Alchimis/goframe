@@ -26,8 +26,10 @@ func NotifyConcreteUser(conn *UserConnection, message string) {
 вот в ч
 нужно сообщение отправлять в канал, так правельнее
 и не еби себе блять мозги слшком сильно. Ты начинал всё это как чил рофл пародию кринж
+НЕ Еби МОЗГИ
 */
 
+// TODO: переделать на MVC
 type ChanelQuery interface {
 	GetChanelById(string) (*inter.Channel, error)
 }
