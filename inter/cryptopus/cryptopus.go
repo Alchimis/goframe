@@ -5,6 +5,7 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/pem"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -12,6 +13,23 @@ import (
 
 func GenerateRSAPrivateKey() (*rsa.PrivateKey, error) {
 	return rsa.GenerateKey(rand.Reader, 2048)
+}
+
+func ReadKeyFromFile(file string) (*rsa.PrivateKey, error) {
+	data, err := os.ReadFile(file)
+	if err != nil {
+		return nil, err
+	}
+
+	block, _ := pem.Decode(data)
+	if block == nil {
+		return nil, errors.New("Can't decode key of raw data")
+	}
+	key, err := x509.ParsePKCS1PrivateKey(block.Bytes)
+	if err != nil {
+		return nil, err
+	}
+	return key, nil
 }
 
 func CryptopusMain() {
@@ -26,7 +44,7 @@ func CryptopusMain() {
 	file := args[1]
 	fileExtension := filepath.Ext(file)
 	// TODO: расширение файла .pem а не pem
-	if fileExtension != "pem" {
+	if fileExtension != ".pem" {
 		fmt.Println("You are made of stupid. file extension mist be a pem. Your extansion is ", fileExtension)
 	}
 

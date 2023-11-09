@@ -2,6 +2,7 @@ package inter
 
 import (
 	"crypto/rsa"
+	"cryptopus"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -13,12 +14,17 @@ type JwtTicketSeller struct {
 	parser        jwt.Parser
 }
 
-
-
 var (
+	ket, err = cryptopus.ReadKeyFromFile("D:\\GOPHER\\goframe\\goframe\build\\key.pem")
+
 	jwtTicketSellerExample JwtTicketSeller = JwtTicketSeller{
 		signingMethod: jwt.SigningMethodPS512,
-		key: ,
+		key:           ket,
+		parser: *jwt.NewParser(
+			func(p *jwt.Parser) {
+				b := p.validMethods
+			},
+		),
 	}
 )
 
@@ -64,8 +70,6 @@ func (jts *JwtTicketSeller) BuyTicket(u *User) *Ticket {
 func (jts *JwtTicketSeller) IsValid(t *Ticket) bool {
 
 }
-
-
 
 func luckyMe() *jwt.Token {
 
