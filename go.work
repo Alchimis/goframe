@@ -7,4 +7,5 @@ use (
 	./build
 	./dbs
 	./inter
+	./inter/cryptopus
 )

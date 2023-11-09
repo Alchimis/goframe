@@ -141,7 +141,7 @@ func (server *Server) ConnectUser(responseWriter http.ResponseWriter, request *h
 	// TODO: добавить проверку токена регистрации
 	// TODO: достать токен из бд
 	var userConn *UserConnection
-	userConn, err = ConstructUserConnectionWithUserId(conn) //ConstructUserConnection(conn)
+	userConn, err = /*ConstructUserConnectionWithUserId(conn)*/ ConstructUserConnection(conn)
 	if err != nil {
 		HandleConstructError(err)
 		return
